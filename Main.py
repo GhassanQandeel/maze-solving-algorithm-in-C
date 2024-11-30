@@ -1,6 +1,19 @@
 import API
 import sys
 
+direction_map = {
+    "N": (0, -1),  # Move up (decrease y by 1)
+    "S": (0, 1),  # Move down (increase y by 1)
+    "W": (-1, 0),  # Move left (decrease x by 1)
+    "E": (1, 0)  # Move right (increase x by 1)
+}
+direction_map_maze = {
+    "N": (0, 1),  # Move up (decrease y by 1)
+    "S": (0, -1),  # Move down (increase y by 1)
+    "W": (-1, 0),  # Move left (decrease x by 1)
+    "E": (1, 0)  # Move right (increase x by 1)
+}
+
 def log(string):
     sys.stderr.write("{}\n".format(string))
     sys.stderr.flush()
@@ -32,70 +45,18 @@ def bfs_propagation(goal_cells, maze, visited, rows, cols):
                 visited[nx][ny] = True
                 queue.append([nx, ny])
 
-def findGoal(maze, goal_cells, visited):
-    # Initialize the starting position
-    x, y = 15,0
-    rows, cols = len(maze), len(maze[0])
-#   16 , 16
-    # Directions for moving: (dx, dy) -> up, down, left, right
-    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-#   to move the maze we should implement our maze so x,y is our current position for maze
-#   if i need to move maze to up i will sub x by 1
-#   if i need to move maze to down i will add x by 1
-#   if i need to move maze to right i will add y by 1
-#   if i need to move maze to left i will sub y by 1
-
-    direction_names = ["N", "S", "W", "E"]
-
-
-
-    while [x, y] not in goal_cells:
-        log("Lets begin bro")
-
-        nx, ny = x - 1, y
-        sx, sy = x + 1 , y
-        wx, wy = x , y - 1
-        ex, ey = x , y + 1
-
-
-        if isWall("S") and isWall("E") and isWall("W") and (maze[nx][ny] == maze[x][y] + 1):
-            move("N")
-            log("move(N)")
-            x, y = nx, ny
-            break
-        elif isWall("S") and isWall("W") and (maze[nx][ny] == maze[x][y] + 1):
-            pass
-
-        break
-        if [x, y] in goal_cells:
-            log(f"Goal reached at ({x}, {y})!")
-        else:
-            log("Failed to reach the goal.")
-
-
-
 
 def isWall(direction):
     if direction == "N":
         return API.wallFront()
     elif direction == "S":
-        API.turnRight()
-        API.turnRight()
-        result = API.wallFront()
-        API.turnRight()
-        API.turnRight()
-        return result
+        return API.wallBack()
     elif direction == "W":
-        API.turnLeft()
-        result = API.wallFront()
-        API.turnRight()
-        return result
+        return API.wallLeft()
     elif direction == "E":
-        API.turnRight()
-        result = API.wallFront()
-        API.turnLeft()
-        return result
+        return API.wallRight()
     return False
+
 
 def move(direction):
     if direction == "N":
@@ -104,16 +65,108 @@ def move(direction):
         API.turnRight()
         API.turnRight()
         API.moveForward()
-        API.turnRight()
-        API.turnRight()
     elif direction == "W":
         API.turnLeft()
         API.moveForward()
-        API.turnRight()
     elif direction == "E":
         API.turnRight()
         API.moveForward()
-        API.turnLeft()
+
+
+def checkWalls():
+    direction_names = ["N", "S", "W", "E"]
+    possible_moves = []
+    for d in direction_names:
+        if not isWall(d):
+            possible_moves.append(d)
+    return possible_moves
+
+
+def Check_move(maze, x, y, x_matrix, y_matrix, visited):
+    stuck = False
+    possible_moves = checkWalls()
+    # log("Debug")
+    # log(" ")
+    # log(" ")
+    # log(f"{} ")
+    # log(f"{} ")
+    # log(" ")
+    # log(" ")
+    # log("Debug")
+
+
+    # here we will check what the possible to do if not return false
+
+
+    for pm in possible_moves:
+        if 0 <= x < 16 and 0 <= y < 16 and 0 <= x_matrix < 16 and 0 <= y_matrix < 16:
+
+            next_move_distance_value_x = x_matrix + direction_map[pm][0]
+            next_move_distance_value_y = y_matrix + direction_map[pm][1]
+            log("Debug")
+            log(" ")
+            log(f"the next move {pm} ")
+            log(f"value of current {maze[x_matrix][y_matrix]} ")
+            log(f"nx {next_move_distance_value_x} ")
+            log(f"yx {next_move_distance_value_y} ")
+            log(f"next move value{maze[next_move_distance_value_x][next_move_distance_value_y]} ")
+            log(" ")
+            log("Debug")
+            if 0 <= next_move_distance_value_x < 16 and 0 <= next_move_distance_value_y < 16 and 0 <= x_matrix < 16 and 0 <= y_matrix < 16:
+                if not (maze[x_matrix][y_matrix] > maze[next_move_distance_value_x][next_move_distance_value_y]):
+                    possible_moves.remove(pm)
+
+
+    direction = []
+    if len(possible_moves) == 0:
+        stuck = True
+    else:
+        for d in possible_moves:
+            direction.append(d)
+        if "S" in direction:
+            direction.remove("S")
+        move(direction[0])
+    return stuck, direction;
+
+
+def findGoal(maze, goal_cells, visited):
+    # Initialize the starting position
+    x, y = 0,0
+    x_matrix,y_matrix = 0,15
+
+    rows, cols = len(maze), len(maze[0])
+
+    while [x, y] not in goal_cells:
+        log("Lets begin bro")
+        log(f"({x},{y}) in the maze")
+        log(f"There wall Right {isWall("E")}")
+        log(f"There wall Left {isWall("W")}")
+        log(f"There wall North {isWall("N")}")
+        log(f"There wall South {isWall("S")}")
+        log(f"manhatin distance for ({x},{y}) is {maze[x][y]}")
+        log(f"matrix cordinate ({x_matrix},{y_matrix})")
+
+        stuck,direction = Check_move(maze, x, y, x_matrix, y_matrix, visited)
+        if len(direction) != 0:
+            direction = direction[0]
+
+        if stuck==True:
+            log("Stuck")
+        else:
+            x=x+direction_map_maze[direction][0]
+            y=y+direction_map_maze[direction][1]
+            x_matrix=x_matrix+direction_map[direction][0]
+            y_matrix=y_matrix+direction_map[direction][1]
+
+
+
+
+
+
+
+
+
+
 
 def main():
     log("Running...")
@@ -140,6 +193,8 @@ def main():
     #Here to find the manhaten distance fo all values before see walls for all
     bfs_propagation(goal_cells, maze_Values, visited, rows, cols)
     setValuesInMaze(maze_Values)
+
+
 
     findGoal(maze_Values,goal_cells,visited)
 
