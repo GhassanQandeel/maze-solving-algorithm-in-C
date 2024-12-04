@@ -1,1 +1,2 @@
-# maze-solving-algorithm-in-Python
+# maze-solving-algorithm-in-C
+
